@@ -1,0 +1,20 @@
+{
+    // Use this configuration to launch an Extension Development Host with the
+    // compiled extension. Make sure you have run `npm install` and `npm run compile`
+    // so that `dist/extension.js` exists. Press F5 to start debugging.
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run Extension",
+            "type": "extensionHost",
+            "request": "launch",
+            "args": [
+                "--extensionDevelopmentPath=${workspaceFolder}"
+            ],
+            "outFiles": [
+                "${workspaceFolder}/dist/**/*.js"
+            ],
+            "preLaunchTask": "npm: compile"
+        }
+    ]
+}
