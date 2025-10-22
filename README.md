@@ -41,8 +41,8 @@ Built on top of the [memory_graph](https://github.com/Akshen/memory_graph) Pytho
 
 1. Clone the repository and navigate to the extension:
    ```bash
-   git clone https://github.com/Akshen/memory_graph.git
-   cd memory_graph/vscode-extension
+   git clone https://github.com/bterwijn/memory_graph_extension.git
+   cd memory_graph_extension/vscode
    ```
 
 2. Install dependencies:
