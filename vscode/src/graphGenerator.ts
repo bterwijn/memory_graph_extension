@@ -96,8 +96,9 @@ function wrapCodeWithMemoryGraph(
         .replace(/\bmemory_graph\.render\([^)]*\)/g, '# memory_graph.render() removed')
         .replace(/\bmemory_graph\.block\([^)]*\)/g, '# memory_graph.block() removed');
 
-    // Escape the output path for Python
-    const escapedPath = outputPath.replace(/\\/g, '\\\\');
+    // Escape the output path for Python (cross-platform)
+    // On Windows, backslashes need to be escaped or use raw strings
+    const escapedPath = outputPath.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
 
     const template = `
 import memory_graph as mg

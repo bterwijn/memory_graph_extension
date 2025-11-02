@@ -1,4 +1,18 @@
-{
+"name": "memory-graph",
+  "displayName": "Memory Graph",
+  "description": "Visualize Python data structures, references, and call stacks",
+  "version": "0.0.1",
+  "publisher": "your-publisher-name",
+  "license": "BSD-2-Clause",
+  "author": {
+    "name": "Akshen Doke",
+    "url": "https://github.com/Akshen"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Akshen/memory_graph.git"
+  },
+  {
   "name": "memory-graph",
   "displayName": "Memory Graph",
   "description": "Visualize Python data structures, references, and call stacks",
@@ -7,6 +21,11 @@
   "engines": {
     "vscode": "^1.85.0"
   },
+  "os": [
+    "darwin",
+    "linux",
+    "win32"
+  ],
   "categories": [
     "Debuggers",
     "Visualization",
@@ -51,6 +70,11 @@
         {
           "when": "editorHasSelection && resourceLangId == python",
           "command": "memoryGraph.visualize",
+          "group": "navigation"
+        },
+        {
+          "when": "resourceLangId == python",
+          "command": "memoryGraph.visualizeFile",
           "group": "navigation"
         }
       ]
