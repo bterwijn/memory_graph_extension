@@ -52,6 +52,11 @@
           "when": "editorHasSelection && resourceLangId == python",
           "command": "memoryGraph.visualize",
           "group": "navigation"
+        },
+        {
+          "when": "resourceLangId == python",
+          "command": "memoryGraph.visualizeFile",
+          "group": "navigation"
         }
       ]
     },
