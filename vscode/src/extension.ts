@@ -135,6 +135,10 @@ Python Environment Status:
             // Store pythonEnv for use in callback
             const currentPythonEnv = pythonEnv;
 
+            // Create or show the webview panel
+            const panel = MemoryGraphPanel.createOrShow(context.extensionUri);
+            panel.showLoading();
+
             // Show progress notification
             await vscode.window.withProgress({
                 location: vscode.ProgressLocation.Notification,
@@ -163,40 +167,150 @@ Python Environment Status:
                 progress.report({ increment: 70 });
 
                 if (result.success && result.outputPath) {
-                    // Open the generated file
-                    const uri = vscode.Uri.file(result.outputPath);
-                    await vscode.commands.executeCommand('vscode.open', uri);
+                    // Display in webview panel with program output
+                    const programOutput = {
+                        stdout: result.stdout || '',
+                        stderr: result.stderr || ''
+                    };
+                    panel.updateGraph(result.outputPath, outputFormat, programOutput);
                     
-                    vscode.window.showInformationMessage(
-                        `Memory graph generated successfully!`,
-                        'Open Again'
-                    ).then(selection => {
-                        if (selection === 'Open Again') {
-                            vscode.commands.executeCommand('vscode.open', uri);
-                        }
-                    });
+                    vscode.window.showInformationMessage('Memory graph generated successfully!');
                 } else {
+                    panel.showError(result.error || 'Unknown error');
                     vscode.window.showErrorMessage(
                         `Failed to generate graph: ${result.error}`
                     );
                 }
             });
-            
-            // TODO: Phase 2.2 - Display in webview panel instead of external viewer
         }
     );
 
-        // Register command: Open Panel
-        const openPanelCommand = vscode.commands.registerCommand(
-            'memoryGraph.openPanel',
-            () => {
-                MemoryGraphPanel.createOrShow(context.extensionUri);
+    // Register command: Visualize Current File
+    const visualizeFileCommand = vscode.commands.registerCommand(
+        'memoryGraph.visualizeFile',
+        async () => {
+            const editor = vscode.window.activeTextEditor;
+            
+            if (!editor) {
+                vscode.window.showErrorMessage('No active editor found');
+                return;
             }
-        );
+
+            if (editor.document.languageId !== 'python') {
+                vscode.window.showErrorMessage('This command only works with Python files');
+                return;
+            }
+
+            // Check environment first
+            if (!pythonEnv) {
+                pythonEnv = await checkPythonEnvironment();
+            }
+
+            // Guard against null pythonEnv
+            if (!pythonEnv) {
+                vscode.window.showErrorMessage('Failed to detect Python environment');
+                return;
+            }
+
+            if (!pythonEnv.hasMemoryGraph) {
+                const action = await vscode.window.showErrorMessage(
+                    'memory_graph package not found',
+                    'Install Instructions'
+                );
+                if (action === 'Install Instructions') {
+                    await showInstallationInstructions(pythonEnv);
+                }
+                return;
+            }
+
+            if (!pythonEnv.hasGraphviz) {
+                const action = await vscode.window.showErrorMessage(
+                    'Graphviz not found',
+                    'Install Instructions'
+                );
+                if (action === 'Install Instructions') {
+                    await showInstallationInstructions(pythonEnv);
+                }
+                return;
+            }
+
+            // Get the entire file content
+            const fileContent = editor.document.getText();
+
+            if (!fileContent.trim()) {
+                vscode.window.showWarningMessage('The file is empty');
+                return;
+            }
+
+            // Store pythonEnv for use in callback
+            const currentPythonEnv = pythonEnv;
+            const fileName = editor.document.fileName.split('/').pop() || 'file';
+
+            // Create or show the webview panel
+            const panel = MemoryGraphPanel.createOrShow(context.extensionUri);
+            panel.showLoading();
+
+            // Update panel title with filename
+            panel.setTitle(`Memory Graph - ${fileName}`);
+
+            // Show progress notification
+            await vscode.window.withProgress({
+                location: vscode.ProgressLocation.Notification,
+                title: `Generating memory graph for ${fileName}...`,
+                cancellable: false
+            }, async (progress) => {
+                progress.report({ increment: 0 });
+
+                // Import graph generator
+                const { generateGraph } = await import('./graphGenerator');
+                
+                // Get output format from settings
+                const config = vscode.workspace.getConfiguration('memoryGraph');
+                const outputFormat = config.get<'svg' | 'png'>('outputFormat', 'svg');
+
+                progress.report({ increment: 30, message: "Executing Python file..." });
+
+                // Generate the graph from entire file
+                const result = await generateGraph({
+                    code: fileContent,
+                    pythonPath: currentPythonEnv.pythonPath,
+                    outputFormat: outputFormat,
+                    visualizeType: 'locals'
+                });
+
+                progress.report({ increment: 70 });
+
+                if (result.success && result.outputPath) {
+                    // Display in webview panel with program output
+                    const programOutput = {
+                        stdout: result.stdout || '',
+                        stderr: result.stderr || ''
+                    };
+                    panel.updateGraph(result.outputPath, outputFormat, programOutput);
+                    
+                    vscode.window.showInformationMessage(`Memory graph for ${fileName} generated successfully!`);
+                } else {
+                    panel.showError(result.error || 'Unknown error');
+                    vscode.window.showErrorMessage(
+                        `Failed to generate graph: ${result.error}`
+                    );
+                }
+            });
+        }
+    );
+
+    // Register command: Open Panel
+    const openPanelCommand = vscode.commands.registerCommand(
+        'memoryGraph.openPanel',
+        () => {
+            MemoryGraphPanel.createOrShow(context.extensionUri);
+        }
+    );
 
     // Add commands to subscriptions for cleanup
     context.subscriptions.push(checkEnvCommand);
     context.subscriptions.push(visualizeCommand);
+    context.subscriptions.push(visualizeFileCommand);
     context.subscriptions.push(openPanelCommand);
 }
 
