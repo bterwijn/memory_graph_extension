@@ -80,7 +80,10 @@ export class MemoryGraphPanel {
     public showError(message: string): void {
         this._panel.webview.html = this._getErrorHtml(message);
     }
-
+    
+    public setTitle(title: string): void {
+    this._panel.title = title;
+    }
     private _getLoadingHtml(): string {
         return `<!DOCTYPE html>
 <html lang="en">
