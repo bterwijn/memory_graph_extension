@@ -24,14 +24,28 @@ export async function getPythonPath(): Promise<string> {
         return userPythonPath;
     }
 
-    // 2. Try to get from Python extension
+    // 2. Try to get from Python extension (active interpreter)
     try {
         const pythonExtension = vscode.extensions.getExtension('ms-python.python');
         if (pythonExtension) {
             if (!pythonExtension.isActive) {
                 await pythonExtension.activate();
             }
-            const pythonPath = pythonExtension.exports?.settings?.getExecutionDetails?.()?.execCommand?.[0];
+            
+            // Try to get the active Python path from the extension
+            const pythonApi = pythonExtension.exports;
+            
+            // Method 1: Get active interpreter path
+            if (pythonApi?.environments) {
+                const activeEnv = await pythonApi.environments.getActiveEnvironmentPath();
+                if (activeEnv?.path) {
+                    console.log('Using active Python environment:', activeEnv.path);
+                    return activeEnv.path;
+                }
+            }
+            
+            // Method 2: Get execution details
+            const pythonPath = pythonApi?.settings?.getExecutionDetails?.()?.execCommand?.[0];
             if (pythonPath) {
                 console.log('Using Python from extension:', pythonPath);
                 return pythonPath;
