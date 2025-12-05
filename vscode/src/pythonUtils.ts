@@ -32,10 +32,9 @@ export async function getPythonPath(): Promise<string> {
                 await pythonExtension.activate();
             }
             
-            // Try to get the active Python path from the extension
             const pythonApi = pythonExtension.exports;
             
-            // Method 1: Get active interpreter path
+            // Method 1: Get active interpreter path (best for venv detection)
             if (pythonApi?.environments) {
                 const activeEnv = await pythonApi.environments.getActiveEnvironmentPath();
                 if (activeEnv?.path) {
@@ -44,7 +43,7 @@ export async function getPythonPath(): Promise<string> {
                 }
             }
             
-            // Method 2: Get execution details
+            // Method 2: Get execution details (fallback)
             const pythonPath = pythonApi?.settings?.getExecutionDetails?.()?.execCommand?.[0];
             if (pythonPath) {
                 console.log('Using Python from extension:', pythonPath);
