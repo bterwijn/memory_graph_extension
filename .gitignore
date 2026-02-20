@@ -73,4 +73,5 @@ lerna-debug.log*
 
 # OS generated
 .Spotlight-V100
-.Trashes
+.Trashesnode_modules/
+dist/
